@@ -161,6 +161,79 @@ fn main() {
     // the number var here is typed to the last expression in the if block.
 
     // let number = if condition { 5 } else { "six" }; - will panic, because the else block must return the same type as the if block.
+
+    // LOOP EXPRESSIONS
+    // loop expressions are a way to repeat a block of code until a condition is met.
+    // loop expressions are expressions, they return a value.
+    // loop expressions are used to repeat a block of code until a condition is met.
+    // let mut count = 0;
+    // loop {
+    //     count += 1;
+    //     println!("count is {count}");
+    // }
+
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+        if counter == 10 {
+            break counter * 2; // this is the value that will be returned from the loop.
+        }
+    };
+
+    // You can also return from inside a loop.
+    // While break only exits the current loop
+    // return always exits the current function.
+
+    // loop labels
+
+    // begin with a single quote and a colon, like this: 'label_name:
+    let mut count = 0;
+    'counting_up: loop {
+        println!("counting up: {count}");
+        let mut remaining = 10;
+
+        loop {
+            println!("remaining = {remaining}");
+            if remaining == 9 {
+                break;
+            }
+            if count == 10 {
+                break 'counting_up;
+            }
+            remaining -= 1;
+        }
+
+        count += 1;
+    }
+    
+    println!("End count = {count}");
+    
+    println!("result is {result}");
+
+    // while loops
+
+    let mut number = 3;
+    while number != 0 { // again no parentheses around the condition!
+        println!("{number}!");
+        number -= 1;
+    }
+    println!("LIFTOFF!!!");
+
+    // for loops
+
+    let a = [10, 20, 30, 40, 50];
+    for element in a { // again no parentheses around the condition!
+        println!("the value is: {element}");
+    }
+
+    // range loop
+
+    for number in (1..4).rev() {
+        println!("{number}!");
+    }
+    println!("LIFTOFF!!!");
 }
 
 fn another_function() {
