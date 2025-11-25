@@ -1,7 +1,5 @@
 use std::io;
 
-const CLEAR_SCREEN: &str = "\x1B[2J\x1B[H";
-
 fn main() {
     let mut shop = Shop::new();
     shop.print_menu();
@@ -24,10 +22,6 @@ fn get_string_input(prompt: &str) -> String {
 fn get_u32_input(prompt: &str) -> u32 {
     let input = get_string_input(prompt);
     let input: u32 = input.trim().parse().expect("Please type a number!");
-    if input == 0 {
-        return get_u32_input(prompt);
-    }
-
     input
 }
 
@@ -117,7 +111,11 @@ impl Shop {
         }
 
         for (index, item_name) in available_items.iter().enumerate() {
-            let item_for_sale = self.items_for_sale.iter().find(|item_inner| item_inner.item_name == *item_name).unwrap();
+            let item_for_sale = self
+                .items_for_sale
+                .iter()
+                .find(|item_inner| item_inner.item_name == *item_name)
+                .unwrap();
             println!(
                 "{} - {} ({} in stock)",
                 index + 1,
@@ -126,29 +124,53 @@ impl Shop {
             );
         }
         let item_index = (get_u32_input("Item index:") - 1) as usize;
+
+        if item_index == 0 {
+            println!("\nBought Nothing!\n");
+            self.go_to_main_menu();
+            return;
+        }
+
+        if item_index == 0 {
+            println!("\nBought Nothing!\n");
+            self.go_to_main_menu();
+            return;
+        }
+
         if item_index >= self.items_for_sale.len() {
             println!("Invalid item index!");
             self.buy_item_from_shop();
             return;
         }
+
         let item = &mut self.items_for_sale[item_index];
         let item_clone = item.clone();
-        let stock_count = get_u32_input("Stock count:");
+        let stock_count = get_u32_input(&format!(
+            "How many {} do you want to buy?",
+            item_clone.item_name
+        ));
 
+        if stock_count == 0 {
+            println!("\nBought Nothing!\n");
+            self.go_to_main_menu();
+            return;
+        }
+
+        if stock_count > item.stock_count {
+            println!(
+                "You can't buy more than {} of {}!",
+                item.stock_count, item_clone.item_name
+            );
+            self.buy_item_from_shop();
+            return;
+        }
 
         item.stock_count -= stock_count;
         if item.stock_count == 0 {
-
             self.items_for_sale.remove(item_index as usize);
         }
 
         println!("You bought {stock_count} {}", item_clone.item_name);
-    }
-
-    fn print_items_for_sale(&self) {
-        for item in &self.items_for_sale {
-            println!("{} - {}", item.item_name, item.stock_count);
-        }
     }
 
     fn print_menu(&mut self) {
