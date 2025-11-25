@@ -1,11 +1,9 @@
-
-
 fn main() {
     what_is_ownership();
 }
 
 fn what_is_ownership() {
-    // let x = [0, 1_000_000]; 
+    // let x = [0, 1_000_000];
     // let y = x // this would copy the entire array into the stack, which is a lot of data.
     // instead we can use a pointer to the array on the heap.
     // let x = Box::new([0, 1_000_000]);
@@ -28,7 +26,7 @@ fn what_is_ownership() {
     // <- heap empty at this point
 
     // let a = Box::new([0; 1_000_000]);
-    // let b = a; 
+    // let b = a;
     // This would be invalid, because a and b would both point to the same heap memory.
     // When b goes out of scope, it would deallocate the heap memory, but a would still point to it.
     // This would be a dangling pointer.
@@ -41,7 +39,6 @@ fn what_is_ownership() {
     // then Rust deallocates the box’s heap memory.
 
     // Boxes are used by Rust data structures1 like Vec, String, and HashMap to hold a variable number of elements.
-    
 
     let name = String::from("John"); // name owns the heap memory for the string "John"
 
@@ -73,11 +70,41 @@ fn what_is_ownership() {
     // and copies the data into it.
     // println!("name is {name}, name_clone is {name_clone}"); // this would print "name is John, name_clone is John"
 
-    let name = String::from("John"); 
+    let name = String::from("John");
     let name_clone = name.clone();
     let full_name = add_suffix(name_clone);
     // name_clone wouldn't be valid anymore, because it was moved to full_name.
-    println!("name is {name}, full_name is {full_name}"); 
+    println!("name is {name}, full_name is {full_name}");
+
+    // Dereferencing
+    // this is written with an *
+
+    let mut x: Box<i32> = Box::new(5);
+    let a: i32 = *x; // *x reads the heap value, so a = 1
+    *x += 1; // *x on the left-side modifies the heap value,
+    //     so x points to the value 2
+
+    let r1: &Box<i32> = &x; // r1 points to x on the stack
+    let b: i32 = **r1; // two dereferences get us to the heap value
+
+    let r2: &i32 = &*x; // r2 points to the heap value directly
+    let c: i32 = *r2; // so only one dereference is needed to read it
+    
+    
+    let x: Box<i32> = Box::new(-1);
+    let abs_1 = i32::abs(*x); // explicit dereference
+    let abs_2 = x.abs();  // implicit dereference
+    assert_eq!(abs_1, abs_2);
+
+    let r: &Box<i32> = &x;
+    let r_abs1 = i32::abs(**r); // explicit dereference (twice)
+    let r_abs2 = r.abs();       // implicit dereference (twice)
+    assert_eq!(r_abs1, r_abs2);
+
+    let s = String::from("Hello");
+    let s_len1 = str::len(&s); // explicit reference
+    let s_len2 = s.len();      // implicit reference
+    assert_eq!(s_len1, s_len2);
 
 }
 
