@@ -24,6 +24,8 @@ pub struct Player {
     current_health: u32,
     max_health: u32,
     strength: u32,
+    boosted_strength: u32,
+    boosted_strength_turns_remaining: u32,
     gold: u32,
     inventory: Vec<InventoryItem>,
     level: u32,
@@ -36,14 +38,12 @@ impl Player {
             current_health: 100,
             max_health: 100,
             strength: 10,
+            boosted_strength: 0,
+            boosted_strength_turns_remaining: 0,
             gold: 100,
             inventory: Vec::new(),
             level: 1,
         }
-    }
-
-    pub fn set_name(&mut self, name: String) {
-        self.name = name;
     }
 
     pub fn get_name(&self) -> &String {
@@ -56,6 +56,19 @@ impl Player {
 
     pub fn get_max_health(&self) -> u32 {
         self.max_health
+    }
+
+    pub fn get_boosted_strength(&self) -> u32 {
+        self.boosted_strength
+    }
+
+    pub fn get_boosted_strength_turns_remaining(&self) -> u32 {
+        self.boosted_strength_turns_remaining
+    }
+
+    pub fn set_boosted_strength(&mut self, boosted_strength: u32) {
+        self.boosted_strength = boosted_strength;
+        self.boosted_strength_turns_remaining = 3;
     }
 
     pub fn get_strength(&self) -> u32 {
@@ -126,5 +139,13 @@ impl Player {
 
     pub fn get_gold(&self) -> u32 {
         self.gold
+    }
+
+    pub fn heal(&mut self, amount: u32) {
+        self.current_health = if amount > self.max_health - self.current_health {
+            self.max_health
+        } else {
+            self.current_health + amount
+        };
     }
 } 

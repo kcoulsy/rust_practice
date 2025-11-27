@@ -1,14 +1,12 @@
 use crate::item::Item;
 use crate::player::Player;
 
-#[derive(Debug)]
 pub struct Enemy {
     name: String,
     current_health: u32,
-    max_health: u32,
     strength: u32,
     gold: u32,
-    // inventory: Vec<Item>,
+    drop_items: Vec<Item>,
     level: u32,
 }
 
@@ -35,16 +33,44 @@ impl Enemy {
 
         // rewards
         let enemy_gold = enemy_level * 10 + rand::random_range(0..=100);
-        // let enemy_inventory = Vec::new();
+        let mut drop_items: Vec<Item>  = vec![];
+        match rand::random_range(0..=100)  {
+            0..=20 => {
+                drop_items.push(
+                    Item::new(String::from("Healing potion"), 10, 10, 0),
+                );
+            }
+            21..=40 => {
+                drop_items.push(
+                    Item::new(String::from("Strength potion"), 20, 0, 10),
+                );
+            }
+            41..=50 => {
+                drop_items.push(
+                    Item::new(String::from("Healing potion"), 10, 10, 0),
+                );
+                drop_items.push(
+                    Item::new(String::from("Strength potion"), 20, 0, 10),
+                );
+            }
+            51..55 => {
+                drop_items.push(
+                  Item::new(String::from("Greater Healing potion"), 50, 30, 0),
+                );
+            }
+            _ => {
+                // no drop items
+            }
+        }
+
 
         Self {
             name: Self::generate_enemy_name(enemy_level),
             current_health: enemy_health as u32,
-            max_health: enemy_health as u32,
             strength: enemy_strength,
             gold: enemy_gold,
-            // inventory: enemy_inventory,
-            level: enemy_level,
+            drop_items: drop_items,
+            level: enemy_level
         }
     }
 
@@ -108,5 +134,9 @@ impl Enemy {
 
     pub fn is_dead(&self) -> bool {
         self.current_health == 0
+    }
+
+    pub fn get_drop_items(&self) -> &Vec<Item> {
+        &self.drop_items
     }
 }

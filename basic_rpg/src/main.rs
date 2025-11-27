@@ -96,6 +96,11 @@ fn attack_enemy(player: &mut Player, enemy: &mut Enemy) {
         println!("\nYou have defeated the enemy!");
         let award_gold = enemy.get_gold();
         player.add_gold(award_gold);
+        let drop_items = enemy.get_drop_items();
+        for item in drop_items {
+            println!("You have found a {}!", item.get_name());
+            player.add_item(item.clone());
+        }
         println!("You have gained {} gold. \n", award_gold);
 
         return start_menu(player);
@@ -132,6 +137,41 @@ fn game_over() {
 
 fn use_item(player: &mut Player, enemy: &mut Enemy) {
     println!("You use an item!");
+    let mut menu = Menu::new(String::from("What item do you want to use?"), vec![]);
+
+    for inventory_item in player.get_inventory_items() {
+        let item_clone = inventory_item.get_item().clone();
+        let label = format!("Use 1x {}", item_clone.get_name());
+        let use_item_menu_item = MenuItem::new(label, move |player, _| {
+            use_item_action(player, &item_clone);
+        });
+
+        menu.push_menu_item(use_item_menu_item);
+    }
+
+    menu.push_menu_item(MenuItem::new(String::from("Go back"), |player, enemy| {
+        return run_battle(player, enemy.unwrap());
+    }));
+
+    menu.run(player, Some(enemy));
+
+    return run_battle(player, enemy);
+}
+
+fn use_item_action(player: &mut Player, item: &Item) {
+    println!("You use the {}!", item.get_name());
+
+    if item.get_heal_amount() > 0 {
+        player.heal(item.get_heal_amount());
+        println!("You heal for {} health!", item.get_heal_amount());
+    }
+
+    if item.get_strength_boost() > 0 {
+        player.set_boosted_strength(item.get_strength_boost());
+        println!("You gain {} strength for 3 turns!", item.get_strength_boost());
+    }
+    
+    player.remove_item(item);
 }
 
 fn run_away(player: &mut Player) {
