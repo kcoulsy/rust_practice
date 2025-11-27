@@ -1,8 +1,8 @@
 mod enemy;
 mod input;
+mod item;
 mod menu;
 mod player;
-mod item;
 
 use enemy::Enemy;
 use input::enter_to_continue;
@@ -13,31 +13,33 @@ use player::Player;
 
 use crate::item::Item;
 
-
 fn main() {
     start_game();
 }
 
 fn start_menu(player: &mut Player) {
-    let menu = Menu::new(String::from("What do you want to do?"), vec![
-        MenuItem::new(String::from("Wander"), |player, _| {
-            println!("\nYou are wandering around.\n");
-            let mut enemy = Enemy::new(player);
-            run_battle(player, &mut enemy);
-        }),
-        MenuItem::new(String::from("Shop"), |player, _| {
-            open_shop(player);
-        }),
-        MenuItem::new(String::from("View inventory"), |player, _| {
-            view_inventory(player);
-        }),
-        MenuItem::new(String::from("Stats"), |_player, _| {
-            println!("\nYou are at the stats.\n");
-        }),
-        MenuItem::new(String::from("Exit"), |_player, _| {
-            std::process::exit(0);
-        }),
-    ]);
+    let mut menu = Menu::new(
+        String::from("What do you want to do?"),
+        vec![
+            MenuItem::new(String::from("Wander"), |player, _| {
+                println!("\nYou are wandering around.\n");
+                let mut enemy = Enemy::new(player);
+                run_battle(player, &mut enemy);
+            }),
+            MenuItem::new(String::from("Shop"), |player, _| {
+                open_shop(player);
+            }),
+            MenuItem::new(String::from("View inventory"), |player, _| {
+                view_inventory(player);
+            }),
+            MenuItem::new(String::from("Stats"), |player, _| {
+                view_stats(player);
+            }),
+            MenuItem::new(String::from("Exit"), |_player, _| {
+                std::process::exit(0);
+            }),
+        ],
+    );
 
     menu.run(player, None);
 }
@@ -54,27 +56,30 @@ fn run_battle(player: &mut Player, enemy: &mut Enemy) {
         player.get_strength()
     );
 
-    let menu = Menu::new(String::from("What do you want to do?"), vec![
-        MenuItem::new(String::from("Attack"), |player, enemy| {
-            if enemy.is_some() {
-                attack_enemy(player, enemy.unwrap());
-            } else {
-                println!("No enemy to attack!");
-                return start_menu(player);
-            }
-        }),
-        MenuItem::new(String::from("Use item"), |player, enemy| {
-            if enemy.is_some() {
-                use_item(player, enemy.unwrap());
-            } else {
-                println!("No enemy to use item on!");
-                return start_menu(player);
-            }
-        }),
-        MenuItem::new(String::from("Run"), |player, _| {
-            run_away(player);
-        }),
-    ]);
+    let mut menu = Menu::new(
+        String::from("What do you want to do?"),
+        vec![
+            MenuItem::new(String::from("Attack"), |player, enemy| {
+                if enemy.is_some() {
+                    attack_enemy(player, enemy.unwrap());
+                } else {
+                    println!("No enemy to attack!");
+                    return start_menu(player);
+                }
+            }),
+            MenuItem::new(String::from("Use item"), |player, enemy| {
+                if enemy.is_some() {
+                    use_item(player, enemy.unwrap());
+                } else {
+                    println!("No enemy to use item on!");
+                    return start_menu(player);
+                }
+            }),
+            MenuItem::new(String::from("Run"), |player, _| {
+                run_away(player);
+            }),
+        ],
+    );
 
     menu.run(player, Some(enemy));
 }
@@ -136,17 +141,20 @@ fn run_away(player: &mut Player) {
 }
 
 fn open_shop(player: &mut Player) {
-    let menu = Menu::new(String::from("What do you want to do?"), vec![
-        MenuItem::new(String::from("Buy items"), |player, _| {
-            buy_items(player);
-        }),
-        MenuItem::new(String::from("Sell items"), |player, _| {
-            sell_items(player);
-        }),
-        MenuItem::new(String::from("Exit"), |player, _| {
-            return start_menu(player);
-        }), 
-    ]);
+    let mut menu = Menu::new(
+        String::from("What do you want to do?"),
+        vec![
+            MenuItem::new(String::from("Buy items"), |player, _| {
+                buy_items(player);
+            }),
+            MenuItem::new(String::from("Sell items"), |player, _| {
+                sell_items(player);
+            }),
+            MenuItem::new(String::from("Exit"), |player, _| {
+                return start_menu(player);
+            }),
+        ],
+    );
     menu.run(player, None);
 }
 
@@ -158,11 +166,11 @@ fn buy_items(player: &mut Player) {
     ];
 
     let mut menu = Menu::new(String::from("What item do you want to buy?"), vec![]);
-    
-    for item in items_for_sale.iter() {
-        let item_name = item.get_name().clone();
-        let menu_item = MenuItem::new(item_name, |player, _| {
-            // buy_item(player, item);
+
+    for item in items_for_sale {
+        let label = format!("Buy {} ({} gold)", item.get_name(), item.get_cost());
+        let menu_item = MenuItem::new(label, move |player, _| {
+            buy_item(player, &item);
         });
         menu.push_menu_item(menu_item);
     }
@@ -170,10 +178,88 @@ fn buy_items(player: &mut Player) {
     menu.run(player, None);
 }
 
+fn buy_item(player: &mut Player, item: &Item) {
+    if !player.can_afford(item.get_cost()) {
+        println!("\nYou cannot afford this item!\n");
+        return open_shop(player);
+    }
+
+    player.reduce_gold(item.get_cost());
+    println!("\nYou buy the {}!\n", item.get_name());
+
+    let item_clone = item.clone();
+    player.add_item(item_clone);
+
+    return open_shop(player);
+}
+
 fn sell_items(player: &mut Player) {
     println!("You sell items!");
+    let mut menu = Menu::new(String::from("What item do you want to sell?"), vec![]);
+
+    for inventory_item in player.get_inventory_items() {
+        let item_clone = inventory_item.get_item().clone();
+        let label = format!("Sell 1x {} for {} gold", item_clone.get_name(), item_clone.get_cost());
+        let sell_single_item_menu_item = MenuItem::new(label, move |player, _| {
+            sell_item(player, &item_clone);
+        });
+        
+        menu.push_menu_item(sell_single_item_menu_item);
+
+        if inventory_item.get_quantity() > 1 {
+            let item_clone = inventory_item.get_item().clone();
+            let label = format!("Sell {}x {} for {} gold", inventory_item.get_quantity(), item_clone.get_name(), item_clone.get_cost() * inventory_item.get_quantity());
+            let sell_multiple_items_menu_item = MenuItem::new(label, move |player, _| {
+                sell_item(player, &item_clone);
+            });
+            menu.push_menu_item(sell_multiple_items_menu_item);
+        }
+
+    }
+
+    menu.push_menu_item(MenuItem::new(String::from("Exit"), |player, _| {
+        return open_shop(player);
+    }));
+    
+    menu.run(player, None);
+}
+
+fn sell_item(player: &mut Player, item: &Item) {
+    player.remove_item(item);
+    player.add_gold(item.get_cost());
+    println!("\nYou sell the {}!\n", item.get_name());
+    enter_to_continue();
+    return open_shop(player);
 }
 
 fn view_inventory(player: &mut Player) {
     println!("You view your inventory!");
+
+    if player.get_inventory_items().is_empty() {
+        println!("\nYour inventory is empty!\n");
+        enter_to_continue();
+        return start_menu(player);
+    }
+
+    println!("Inventory:\n");
+    for inventory_item in player.get_inventory_items() {
+        println!("{} (x{})", inventory_item.get_item().get_name(), inventory_item.get_quantity());
+    }
+    println!("\n");
+
+    enter_to_continue();
+
+    start_menu(player);
+}
+
+
+fn view_stats(player: &mut Player) {
+    println!("You view your stats!");
+    println!("Name: {}", player.get_name());
+    println!("Level: {}", player.get_level());
+    println!("Health: {}", player.get_current_health());
+    println!("Strength: {}", player.get_strength());
+    println!("Gold: {}", player.get_gold());
+    enter_to_continue();
+    start_menu(player);
 }
