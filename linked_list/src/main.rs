@@ -215,4 +215,18 @@ impl<T: PartialEq> LinkedList<T> {
         }
         println!("]");
     }
+
+    // reverses in place, basically swaps the direction of the next links between nodes
+    fn reverse(&mut self) {
+        let mut previous = None;
+        let mut current = self.head.take();
+
+        while let Some(mut node) = current {
+            let next_node = node.next.take();
+            node.next = previous;
+            previous = Some(node);
+            current = next_node;
+        }
+        self.head = previous;
+    }
 }
